@@ -100,15 +100,16 @@ where
     }
 
     fn pin_states(&self) -> Result<[bool; 8], <GPIO as embedded_hal::digital::v2::InputPin>::Error> {
-            Ok([
-                self.p8.is_high()?, //msb
-                self.p7.is_high()?,
-                self.p6.is_high()?,
-                self.p5.is_high()?,
-                self.p4.is_high()?,
-                self.p3.is_high()?,
-                self.p2.is_high()?,
-                self.p1.is_high()?, //lsb
-            ])
+            
+	Ok([
+            self.p8.is_high()?, //msb
+            self.p7.is_high()?,
+            self.p6.is_high()?,
+            self.p5.is_high()?,
+            self.p4.is_high()?,
+            self.p3.is_high()?,
+            self.p2.is_high()?,
+            self.p1.is_high()?, //lsb
+        ])
     }
 }

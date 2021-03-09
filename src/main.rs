@@ -6,14 +6,14 @@ use rppal::gpio::{Gpio};
 pub fn main() {
 
     let encoder = Ace128::new(
-        Gpio::new().unwrap().get(5).unwrap().into_input(),
-        Gpio::new().unwrap().get(6).unwrap().into_input(),
-        Gpio::new().unwrap().get(7).unwrap().into_input(),
-        Gpio::new().unwrap().get(8).unwrap().into_input(),
-        Gpio::new().unwrap().get(23).unwrap().into_input(),
-        Gpio::new().unwrap().get(24).unwrap().into_input(),
-        Gpio::new().unwrap().get(25).unwrap().into_input(),
-        Gpio::new().unwrap().get(26).unwrap().into_input()
+        Gpio::new().unwrap().get(1).unwrap().into_input_pullup(),
+        Gpio::new().unwrap().get(2).unwrap().into_input_pullup(),
+        Gpio::new().unwrap().get(3).unwrap().into_input_pullup(),
+        Gpio::new().unwrap().get(4).unwrap().into_input_pullup(),
+        Gpio::new().unwrap().get(5).unwrap().into_input_pullup(),
+        Gpio::new().unwrap().get(6).unwrap().into_input_pullup(),
+        Gpio::new().unwrap().get(7).unwrap().into_input_pullup(),
+	Gpio::new().unwrap().get(8).unwrap().into_input_pullup()
     );
     
     loop {
