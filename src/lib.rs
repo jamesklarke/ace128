@@ -81,7 +81,7 @@ where
     pub fn read_angle(&self) -> Result<f64, <GPIO as embedded_hal::digital::v2::InputPin>::Error> {
         match self.read()? {
             Some(position) => Ok(Self::position_to_angle(position)),
-            None => Ok(10.0),
+            None => Ok(0.0),
         }
     }
 
@@ -101,7 +101,7 @@ where
 
     fn pin_states(&self) -> Result<[bool; 8], <GPIO as embedded_hal::digital::v2::InputPin>::Error> {
             
-	Ok([
+	    Ok([
             self.p8.is_high()?, //msb
             self.p7.is_high()?,
             self.p6.is_high()?,
