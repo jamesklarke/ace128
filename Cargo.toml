@@ -1,11 +1,13 @@
 [package]
 name = "ace128_driver"
 version = "0.1.0"
-authors = ["James Clarke <james.e.clarke@sheffield.ac.uk>"]
+authors = ["James Clarke <james@therobworks.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 embedded-hal = {version = "0.2.4", features = ["unproven"]}
-rppal = {version = "0.11.3", features=["hal-unproven"]}
+
+[dev-dependencies]
+embedded-hal-mock = "0.7.2"

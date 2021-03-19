@@ -1,9 +1,21 @@
-#![no_std]
+//! Platform-agnostic driver for reading a Bourns Absolute Contact Encoder [Bourns Absolute Contact Encoder (ACE-128)]
+//! using [embedded-hal].
+//!
+//! [embedded-hal]: https://docs.rs/embedded-hal
+//! [Bourns Absolute Contact Encoder (ACE-128)]: https://www.bourns.com/pdfs/ace.pdf
+
+
+#![cfg_attr(not(test), no_std)]
 
 use embedded_hal as hal;
 use core::f64::consts::PI;
+use hal::digital::v2::InputPin;
 
-const ACE128_MAP: [Option<u8>; 256] = [
+#[cfg(test)]
+mod test;
+
+/// Maps the output of the 8 GPIO pins onto an encoder position. The array index is the 'Decimal Output' of the GPIO pins, and the value at the index is the corresponding 'Position'. Only 128 valid positions exist for the 256 states (2<sup>8 x GPIO</sup>) therefore invalid positions return None. See datasheet for more details.
+pub const ACE128_MAP: [Option<u8>; 256] = [
     None     , Some( 56), Some( 40), Some( 55), Some( 24), None     , Some( 39), Some( 52), Some(  8), Some( 57), None     , None     , Some( 23), None     , Some( 36), Some( 13),
     Some(120), None     , Some( 41), Some( 54), None     , None     , None     , Some( 53), Some(  7), None     , None     , None     , Some( 20), Some( 19), Some(125), Some( 18),
     Some(104), Some(105), None     , None     , Some( 25), Some(106), Some( 38), None     , None     , Some( 58), None     , None     , None     , None     , Some( 37), Some( 14),
@@ -22,61 +34,29 @@ const ACE128_MAP: [Option<u8>; 256] = [
     Some( 77), Some( 82), Some( 78), Some( 65), Some( 76), Some( 63), None     , Some( 64), Some( 98), Some( 81), Some( 79), Some( 80), Some( 97), Some( 96), Some(112), None     ,
 ];
 
-#[cfg(test)]
-mod test {
-
-    use super::*;
-    
-    #[test]
-    fn correct_number_of_constants() {
-        let count = ACE128_MAP.iter().filter_map(|&x| x).count();
-        assert_eq!(count, 128);
-    }
-
-    #[test]
-    fn correct_sum_of_constants() {
-        let sum: u32 = ACE128_MAP.iter().filter_map(|&x| x).map(|x| u32::from(x)).sum();
-        assert_eq!(sum, 127 * 128 / 2);
-    }
-
-    #[test]
-    fn monotonically_increasing_constants() {
-        let mut map = ACE128_MAP.clone();
-        map.sort();
-
-        for (ix, val) in map.iter().filter_map(|&x| x).enumerate() {
-            assert_eq!(ix as u8, val);
-        }
-
-    }
+/// Holds the GPIO pins in use by the encoder.
+pub struct Ace128<GpioPin> {
+    p1: GpioPin,
+    p2: GpioPin,
+    p3: GpioPin,
+    p4: GpioPin,
+    p5: GpioPin,
+    p6: GpioPin,
+    p7: GpioPin,
+    p8: GpioPin,
 }
 
-
-pub struct Ace128<GPIO> {
-    p1: GPIO,
-    p2: GPIO,
-    p3: GPIO,
-    p4: GPIO,
-    p5: GPIO,
-    p6: GPIO,
-    p7: GPIO,
-    p8: GPIO,
-    map: [Option<u8>; 256]
-}
-
-impl<GPIO> Ace128<GPIO> 
-where
-    GPIO: hal::digital::v2::InputPin
-{
+impl<GpioPin: InputPin> Ace128<GpioPin> {
+    /// Creates a new instance of the encoder driver attached to the eight supplied GpioPin pins.   
     pub fn new(
-        p1: GPIO,
-        p2: GPIO, 
-        p3: GPIO,
-        p4: GPIO,
-        p5: GPIO,
-        p6: GPIO,
-        p7: GPIO,
-        p8: GPIO,
+        p1: GpioPin,
+        p2: GpioPin, 
+        p3: GpioPin,
+        p4: GpioPin,
+        p5: GpioPin,
+        p6: GpioPin,
+        p7: GpioPin,
+        p8: GpioPin,
     ) -> Self {
         Self {
             p1,
@@ -87,36 +67,38 @@ where
             p6,
             p7,
             p8,
-            map: ACE128_MAP,
         }
     }
 
-    pub fn position_to_angle(position: u8) -> f64 {
-        ((2.0 * PI  / 127.0) * position as f64) - PI
+    /// Safely converts from position (0 to 127) to angle in radians (0 to 2*PI)
+    fn position_to_angle(position: u8) -> f64 {
+        (2.0 * PI  / 127.0) * position as f64
     }
 
-    pub fn read_angle(&self) -> Result<f64, <GPIO as embedded_hal::digital::v2::InputPin>::Error> {
+    /// Read the absolute position of the encoder in radians.
+    pub fn read_angle(&self) -> Result<f64, <GpioPin as InputPin>::Error> {
         match self.read()? {
             Some(position) => Ok(Self::position_to_angle(position)),
             None => Ok(0.0),
         }
     }
 
-    fn read(&self) -> Result<Option<u8>, <GPIO as embedded_hal::digital::v2::InputPin>::Error> {
+    /// Read the output of the encoder from 0 to 127.
+    pub fn read(&self) -> Result<Option<u8>, <GpioPin as InputPin>::Error> {
         let states = self.pin_states()?;
-        let byte = self.convert_pin_states(states);
+        let byte = Self::byte_from_bool_array(states);
 
-        Ok(self.map[byte as usize])
+        Ok(ACE128_MAP[byte as usize])
     }
-
-    fn convert_pin_states(&self, states: [bool; 8]) -> u8 {
+    /// Converts a bool array of length 8 into a byte.
+    fn byte_from_bool_array(states: [bool; 8]) -> u8 {
         states.iter()
         .fold(0, |result, &bit| {
             (result << 1) ^ bit as u8
         })
     }
-
-    fn pin_states(&self) -> Result<[bool; 8], <GPIO as embedded_hal::digital::v2::InputPin>::Error> {
+    /// Reads the state of each GpioPin pin and returns the result as an array of bools.
+    fn pin_states(&self) -> Result<[bool; 8], <GpioPin as InputPin>::Error> {
             
 	    Ok([
             self.p8.is_high()?, //msb
@@ -130,3 +112,5 @@ where
         ])
     }
 }
+
+
