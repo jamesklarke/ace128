@@ -6,7 +6,7 @@ use core::f64::consts::PI;
 const ACE128_MAP: [Option<u8>; 256] = [
     None     , Some( 56), Some( 40), Some( 55), Some( 24), None     , Some( 39), Some( 52), Some(  8), Some( 57), None     , None     , Some( 23), None     , Some( 36), Some( 13),
     Some(120), None     , Some( 41), Some( 54), None     , None     , None     , Some( 53), Some(  7), None     , None     , None     , Some( 20), Some( 19), Some(125), Some( 18),
-    Some(104), Some(105), None     , None     , Some( 25), Some(106), Some( 38), None     , None     , Some( 58), None     , None     , None     , None     , Some( 27), Some( 14),
+    Some(104), Some(105), None     , None     , Some( 25), Some(106), Some( 38), None     , None     , Some( 58), None     , None     , None     , None     , Some( 37), Some( 14),
     Some(119), Some(118), None     , None     , None     , Some(107), None     , None     , Some(  4), None     , Some(  3), None     , Some(109), Some(108), Some(  2), Some(  1),
     Some( 88), None     , Some( 89), None     , None     , None     , None     , Some( 51), Some(  9), Some( 10), Some( 90), None     , Some( 22), Some( 11), None     , Some( 12),
     None     , None     , Some( 42), Some( 43), None     , None     , None     , None     , None     , None     , None     , None     , Some( 21), None     , Some(126), Some(127),
@@ -28,9 +28,26 @@ mod test {
     use super::*;
     
     #[test]
-    fn correct_constants() {
+    fn correct_number_of_constants() {
         let count = ACE128_MAP.iter().filter_map(|&x| x).count();
         assert_eq!(count, 128);
+    }
+
+    #[test]
+    fn correct_sum_of_constants() {
+        let sum: u32 = ACE128_MAP.iter().filter_map(|&x| x).map(|x| u32::from(x)).sum();
+        assert_eq!(sum, 127 * 128 / 2);
+    }
+
+    #[test]
+    fn monotonically_increasing_constants() {
+        let mut map = ACE128_MAP.clone();
+        map.sort();
+
+        for (ix, val) in map.iter().filter_map(|&x| x).enumerate() {
+            assert_eq!(ix as u8, val);
+        }
+
     }
 }
 
