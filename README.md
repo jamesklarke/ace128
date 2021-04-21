@@ -28,5 +28,5 @@ fn main() {
     loop {
         let angle = encoder.read_angle().unwrap();
     }
-
+}
 ```
