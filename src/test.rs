@@ -17,7 +17,7 @@ fn correct_sum_of_constants() {
 fn monotonically_increasing_constants() {
     let mut map = ACE128_MAP.clone();
     map.sort();
-
+    // valid only if ix remains less than 256, else it overflows u8
     for (ix, val) in map.iter().filter_map(|&x| x).enumerate() {
         assert_eq!(ix as u8, val);
     }

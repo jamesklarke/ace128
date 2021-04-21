@@ -72,7 +72,7 @@ impl<GpioPin: InputPin> Ace128<GpioPin> {
 
     /// Safely converts from position (0 to 127) to angle in radians (0 to 2*PI)
     fn position_to_angle(position: u8) -> f64 {
-        (2.0 * PI  / 127.0) * position as f64
+        (2.0 * PI  / 127.0) * f64::from(position)
     }
 
     /// Read the absolute position of the encoder in radians.
@@ -88,13 +88,13 @@ impl<GpioPin: InputPin> Ace128<GpioPin> {
         let states = self.pin_states()?;
         let byte = Self::byte_from_bool_array(states);
 
-        Ok(ACE128_MAP[byte as usize])
+        Ok(ACE128_MAP[usize::from(byte)])
     }
     /// Converts a bool array of length 8 into a byte.
     fn byte_from_bool_array(states: [bool; 8]) -> u8 {
         states.iter()
         .fold(0, |result, &bit| {
-            (result << 1) ^ bit as u8
+            (result << 1) ^ u8::from(bit)
         })
     }
     /// Reads the state of each GpioPin pin and returns the result as an array of bools.
